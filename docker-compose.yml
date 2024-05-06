@@ -1,0 +1,65 @@
+version: "3.7"
+
+services:
+
+  db:
+    container_name: postgres-database
+    image: postgres:16-alpine3.18 # alpine is a light version of Linux
+    restart: always # allowing to restart the container
+    environment:
+      - POSTGRES_USER=postgres # defining username
+      - POSTGRES_PASSWORD=0000 # defining password
+      - POSTGRES_DB=finances # name of default database created
+      # this ENV variable is only required for the healthcheck section - if you don't specify it, the check command will fail stating the root user doesn't exist in posgres
+      - PGUSER=postgres
+    volumes:
+      - ./database-data:/var/lib/postgresql/data # persistent data
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    healthcheck:
+      # this command checks if the database is ready, right on the source db server
+      test: pg_isready -d finances -h localhost -p 5432 -U postgres
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_interval: 15s
+
+  app:
+    container_name: app-finances
+    build: .
+    depends_on: # db will start before etl
+      db:
+        condition: service_healthy
+    environment:
+      - DB_DRIVERNAME=postgresql
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=0000
+      - DB_HOST=postgres-database # name given to db container
+      - DB_PORT=5432
+      - DB_NAME=finances
+    volumes:
+      - ./app:/app
+    deploy:
+      resources:
+        reservations:
+          cpus: "4"
+          memory: 4G 
+        limits:
+          cpus: "4"
+          memory: 6G
+    command: tail -F anything
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: pgadmin4
+  #   hostname: pgadmin
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+  #     - PGADMIN_DEFAULT_PASSWORD=admin
+  #   ports:
+  #     - 16543:80
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
