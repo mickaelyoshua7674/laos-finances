@@ -27,3 +27,5 @@ RUN apt-get update && apt-get upgrade -y && \
     rm -rf /tmp 
 
 ENV PATH="/venv/bin:$PATH"
+
+EXPOSE 8080

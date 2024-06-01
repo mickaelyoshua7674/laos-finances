@@ -43,32 +43,27 @@ services:
       db:
         condition: service_healthy
 
-  # app:
-  #   networks:
-  #     - postgres-network
-  #   container_name: app-finances
-  #   build: .
-  #   depends_on: # db will start before etl
-  #     db:
-  #       condition: service_healthy
-  #   environment:
-  #     - DB_DRIVERNAME=postgresql
-  #     - DB_USERNAME=postgres
-  #     - DB_PASSWORD=0000
-  #     - DB_HOST=postgres-database # name given to db container
-  #     - DB_PORT=5432
-  #     - DB_NAME=finances
-  #   volumes:
-  #     - ./app:/app
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         cpus: "4"
-  #         memory: 4G 
-  #       limits:
-  #         cpus: "4"
-  #         memory: 6G
-  #   command: tail -F anything
+  app:
+    networks:
+      - postgres-network
+    container_name: finances
+    build: .
+    depends_on: # db will start before app
+      db:
+        condition: service_healthy
+    environment:
+      - DB_DRIVERNAME=postgresql
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=0000
+      - DB_HOST=postgres-database # name given to db container
+      - DB_PORT=5432
+      - DB_NAME=finances
+      - SERVER_PORT=8080
+    volumes:
+      - ./app:/app
+    ports:
+      - 8080:8080
+    command: tail -F anything
 
 networks:
   postgres-network:
