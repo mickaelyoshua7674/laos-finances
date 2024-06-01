@@ -33,7 +33,6 @@ services:
       - postgres-network
     image: dpage/pgadmin4
     container_name: pgadmin4
-    hostname: pgadmin
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@admin.com
       - PGADMIN_DEFAULT_PASSWORD=admin
@@ -63,6 +62,8 @@ services:
       - ./app:/app
     ports:
       - 8080:8080
+    expose:
+      - 8080
     command: tail -F anything
 
 networks:
