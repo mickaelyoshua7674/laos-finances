@@ -38,3 +38,6 @@ venv/
 
 # Database data
 Database-data/
+
+# Pgadmin4 data
+pgadmin-files/
