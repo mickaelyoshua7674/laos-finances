@@ -4,11 +4,11 @@ app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"Place":"Home"}
+    return {"message":"Home"}
 
 @app.get("/hi")
 def hw():
-    return {"Hello":"World"}
+    return {"message":"Hello World!"}
 
 if __name__ == "__main__":
     from os import environ
