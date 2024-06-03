@@ -66,7 +66,8 @@ services:
       - 8080:8080
     expose:
       - 8080
-    command: tail -F anything
+    command: python main.py
+    # command: tail -F anything
 
 networks:
   postgres-network:
