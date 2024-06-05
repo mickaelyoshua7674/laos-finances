@@ -53,7 +53,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DB_DRIVERNAME=postgresql
+      - DB_DRIVERNAME=postgresql+asyncpg
       - DB_USERNAME=postgres
       - DB_PASSWORD=0000
       - DB_HOST=postgres-database # name given to db container
@@ -66,8 +66,8 @@ services:
       - 8080:8080
     expose:
       - 8080
-    command: python main.py
-    # command: tail -F anything
+    # command: python main.py
+    command: tail -F anything
 
 networks:
   postgres-network:
