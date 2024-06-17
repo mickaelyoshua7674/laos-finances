@@ -1,15 +1,13 @@
+from expense.expense import expenses
 from fastapi import FastAPI
 from os import environ
 
 app = FastAPI()
+app.include_router(expenses)
 
 @app.get("/")
 async def home():
     return {"message":"Home"}
-
-@app.get("/hi")
-async def hw():
-    return {"message":"Hello World!"}
 
 if __name__ == "__main__":
     import uvicorn

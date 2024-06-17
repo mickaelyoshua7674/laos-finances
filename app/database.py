@@ -13,6 +13,13 @@ engine = create_async_engine(URL.create(drivername=environ["DB_DRIVERNAME"],
 
 session = async_sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
+async def getSession():
+    db = session()
+    try:
+        yield db
+    finally:
+        db.close()
+
 async def getTable():
     async with session() as s:
         result = await s.execute(text('SELECT * FROM "dim_frequencyType";'))
