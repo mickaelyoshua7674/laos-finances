@@ -99,7 +99,7 @@ CREATE TABLE fato_expense (
 	"idFrequencyType" INT NOT NULL,
 	"idExpenseSubCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
-	expenseDate DATE,
+	"expenseDate" DATE,
 	CONSTRAINT "fk_expense_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_expenseSubCategory" FOREIGN KEY ("idExpenseSubCategory") REFERENCES "dim_expenseSubCategory"("idExpenseSubCategory")
 );
@@ -121,7 +121,7 @@ CREATE TABLE fato_income (
 	"idFrequencyType" INT NOT NULL,
 	"idIncomeCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
-	incomeDate DATE,
+	"incomeDate" DATE,
 	CONSTRAINT "fk_income_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_incomeCategory" FOREIGN KEY ("idIncomeCategory") REFERENCES "dim_incomeCategory"("idIncomeCategory")
 );

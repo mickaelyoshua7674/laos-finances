@@ -1,4 +1,4 @@
-from expense.expense import expenses
+from expense.expenseRoute import expenses
 from fastapi import FastAPI
 from os import environ
 

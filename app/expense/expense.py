@@ -1,16 +1,16 @@
-from .model import Expense, insertScriptExpense
-from fastapi import APIRouter
-from datetime import datetime
-from database import engine
+from pydantic import BaseModel
+from sqlalchemy import text
+from datetime import date
 
-expenses = APIRouter(prefix="/expenses", tags=["expenses"])
+class Expense(BaseModel):
+    idFrequencyType:int
+    idExpenseSubCategory:int
+    value:float
+    expenseDate:date
 
-@expenses.post("/", response_model=Expense)
-async def addExpense(e:Expense):
-    insert = e.model_dump()
-    insert["expenseDate"] = datetime.strptime(insert["expenseDate"], "%d-%m-%Y")
-    print(insert)
-    async with engine.connect() as conn:
-        await conn.execute(insertScriptExpense, insert)
-        await conn.commit()
-    return e.model_dump()
+    @classmethod
+    def fromTuple(cls, tpl):
+        print({k: v for k, v in zip(cls.model_fields.keys(), tpl)})
+        return cls(**{k: v for k, v in zip(cls.model_fields.keys(), tpl)})
+
+insertScriptExpense = text('INSERT INTO fato_expense VALUES (:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);')
