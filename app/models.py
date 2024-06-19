@@ -1,7 +1,24 @@
-from database import pkUserName, fkFrequencyType, fkExpenseSubCategory
 from pydantic import BaseModel, Field, field_validator, SecretStr
-from sqlalchemy import text
+from sqlalchemy import text, TextClause
+from database import engine
 from datetime import date
+import asyncio
+
+async def getUser() -> set:
+    async with engine.connect() as conn:
+        res = await conn.execute(text(f'SELECT "userName" FROM dim_user;'))
+        return {v[0] for v in res.fetchall()}
+async def getFK(fk:str) -> set:
+    async with engine.connect() as conn:
+        res = await conn.execute(text(f'SELECT "{fk}" FROM "dim_{fk[2].lower()+fk[3:]}";'))
+        return {v[0] for v in res.fetchall()}
+async def allPK_FK():
+    tasks = [asyncio.create_task(getUser()),
+             asyncio.create_task(getFK("idFrequencyType")),
+             asyncio.create_task(getFK("idExpenseSubCategory")),
+             asyncio.create_task(getFK("idIncomeCategory"))]
+    return await asyncio.gather(*tasks)
+pkUserName, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.run(allPK_FK())
 
 class User(BaseModel):
     userName:str
@@ -10,7 +27,6 @@ class User(BaseModel):
     password:SecretStr
 
     @field_validator("userName")
-    @classmethod
     def checkUserName(cls, u:str) -> str:
         if u not in pkUserName:
             raise(ValueError("Username not registred."))
@@ -18,7 +34,6 @@ class User(BaseModel):
             return u
 
 
-insertScriptExpense = text("INSERT INTO fato_expense VALUES (:userName,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);")
 class Expense(BaseModel):
     userName:str
     idFrequencyType:int
@@ -27,7 +42,6 @@ class Expense(BaseModel):
     expenseDate:date
 
     @field_validator("userName")
-    @classmethod
     def checkUserName(cls, u:str) -> str:
         if u not in pkUserName:
             raise(ValueError("Username not registred."))
@@ -35,7 +49,6 @@ class Expense(BaseModel):
             return u
 
     @field_validator("idFrequencyType")
-    @classmethod
     def checkFrequencyType(cls, x:int) -> int:
         if x not in fkFrequencyType:
             raise (ValueError("No match to constraint in Foreing Key idFrequencyType"))
@@ -43,12 +56,15 @@ class Expense(BaseModel):
             return x
 
     @field_validator("idExpenseSubCategory")
-    @classmethod
     def checkExpenseSubCategory(cls, x:int) -> int:
         if x not in fkExpenseSubCategory:
             raise (ValueError("No match to constraint in Foreing Key idExpenseSubCategory"))
         else:
             return x
+    
+    @classmethod
+    def getInsertScript(cls) -> TextClause:
+        return text("INSERT INTO fato_expense VALUES (:userName,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);")
 
 
 class Income(BaseModel):

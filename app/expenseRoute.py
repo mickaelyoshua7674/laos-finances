@@ -1,4 +1,4 @@
-from models import Expense, insertScriptExpense, text
+from models import Expense, text
 from fastapi import APIRouter
 from database import engine
 
@@ -8,7 +8,7 @@ expenses = APIRouter(prefix="/expenses", tags=["expenses"])
 async def addExpense(e:Expense) -> Expense:
     insert = e.model_dump()
     async with engine.connect() as conn:
-        await conn.execute(insertScriptExpense, insert)
+        await conn.execute(e.getInsertScript(), insert)
         await conn.commit()
     return e
 
