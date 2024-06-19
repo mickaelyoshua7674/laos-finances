@@ -10,7 +10,7 @@ DROP TABLE IF EXISTS "dim_frequencyType";
 -- DIM Frequency Type
 CREATE TABLE "dim_frequencyType" (
 	"idFrequencyType" INT GENERATED ALWAYS AS IDENTITY,
-	description VARCHAR(50) NOT NULL,
+	description TEXT NOT NULL,
 	CONSTRAINT "pk_frequencyType" PRIMARY KEY("idFrequencyType")
 );
 INSERT INTO "dim_frequencyType" (description) VALUES
@@ -20,7 +20,7 @@ INSERT INTO "dim_frequencyType" (description) VALUES
 -- DIM Expense Category
 CREATE TABLE "dim_expenseCategory" (
 	"idExpenseCategory" INT GENERATED ALWAYS AS IDENTITY,
-	description VARCHAR(50) NOT NULL,
+	description TEXT NOT NULL,
 	CONSTRAINT "pk_expenseCategory" PRIMARY KEY("idExpenseCategory")
 );
 INSERT INTO "dim_expenseCategory" (description) VALUES 
@@ -43,7 +43,7 @@ INSERT INTO "dim_expenseCategory" (description) VALUES
 CREATE TABLE "dim_expenseSubCategory" (
 	"idExpenseSubCategory" INT GENERATED ALWAYS AS IDENTITY,
 	"idExpenseCategory" INT NOT NULL,
-	description VARCHAR(50) NOT NULL,
+	description TEXT NOT NULL,
 	CONSTRAINT "pk_expenseSubCategory" PRIMARY KEY ("idExpenseSubCategory"),
 	CONSTRAINT "fk_expenseCategory" FOREIGN KEY ("idExpenseCategory") REFERENCES "dim_expenseCategory"("idExpenseCategory")
 );
@@ -97,20 +97,22 @@ INSERT INTO "dim_expenseSubCategory" ("idExpenseCategory", description) VALUES
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM User
 CREATE TABLE dim_user (
-	"idUser" INT GENERATED ALWAYS AS IDENTITY,
-	description VARCHAR(50) NOT NULL,
-	CONSTRAINT "pk_user" PRIMARY KEY ("idUser")
+	"userName" TEXT,
+	name TEXT NOT NULL,
+	email TEXT NOT NULL,
+	password TEXT NOT NULL,
+	CONSTRAINT "pk_user" PRIMARY KEY ("userName")
 );
-INSERT INTO dim_user (description) VALUES ('laos');
+INSERT INTO dim_user VALUES ('laos','laos mycr','laos@mycr.com','0000');
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Expenses
 CREATE TABLE fato_expense (
-	"idUser" INT NOT NULL,
+	"userName" TEXT,
 	"idFrequencyType" INT NOT NULL,
 	"idExpenseSubCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
 	"expenseDate" DATE,
-	CONSTRAINT "fk_expense_user" FOREIGN KEY ("idUser") REFERENCES dim_user("idUser"),
+	CONSTRAINT "fk_expense_user" FOREIGN KEY ("userName") REFERENCES dim_user("userName"),
 	CONSTRAINT "fk_expense_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_expenseSubCategory" FOREIGN KEY ("idExpenseSubCategory") REFERENCES "dim_expenseSubCategory"("idExpenseSubCategory")
 );
@@ -119,7 +121,7 @@ CREATE TABLE fato_expense (
 -- DIM Income Category
 CREATE TABLE "dim_incomeCategory" (
 	"idIncomeCategory" INT GENERATED ALWAYS AS IDENTITY,
-	description VARCHAR(50) NOT NULL,
+	description TEXT NOT NULL,
 	CONSTRAINT "pk_IncomeCategory" PRIMARY KEY ("idIncomeCategory")
 );
 INSERT INTO "dim_incomeCategory" (description) VALUES
@@ -129,12 +131,12 @@ INSERT INTO "dim_incomeCategory" (description) VALUES
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Income
 CREATE TABLE fato_income (
-	"idUser" INT NOT NULL,
+	"userName" TEXT,
 	"idFrequencyType" INT NOT NULL,
 	"idIncomeCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
 	"incomeDate" DATE,
-	CONSTRAINT "fk_expense_user" FOREIGN KEY ("idUser") REFERENCES dim_user("idUser"),
+	CONSTRAINT "fk_expense_user" FOREIGN KEY ("userName") REFERENCES dim_user("userName"),
 	CONSTRAINT "fk_income_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_incomeCategory" FOREIGN KEY ("idIncomeCategory") REFERENCES "dim_incomeCategory"("idIncomeCategory")
 );
