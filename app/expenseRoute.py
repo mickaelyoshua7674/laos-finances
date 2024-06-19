@@ -1,4 +1,4 @@
-from .Expense import Expense, insertScriptExpense, text
+from models import Expense, insertScriptExpense, text
 from fastapi import APIRouter
 from database import engine
 

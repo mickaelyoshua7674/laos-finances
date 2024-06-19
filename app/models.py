@@ -1,8 +1,24 @@
 from database import pkUserName, fkFrequencyType, fkExpenseSubCategory
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, SecretStr
 from sqlalchemy import text
 from datetime import date
 
+class User(BaseModel):
+    userName:str
+    name:str
+    email:str = Field(pattern=r"/^[a-z0-9.]+@[a-z0-9]+\.[a-z]+\.([a-z]+)?$/i")
+    password:SecretStr
+
+    @field_validator("userName")
+    @classmethod
+    def checkUserName(cls, u:str) -> str:
+        if u not in pkUserName:
+            raise(ValueError("Username not registred."))
+        else:
+            return u
+
+
+insertScriptExpense = text("INSERT INTO fato_expense VALUES (:userName,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);")
 class Expense(BaseModel):
     userName:str
     idFrequencyType:int
@@ -34,4 +50,9 @@ class Expense(BaseModel):
         else:
             return x
 
-insertScriptExpense = text("INSERT INTO fato_expense VALUES (:userName,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);")
+
+class Income(BaseModel):
+    idFrequencyType:int
+    idIncomeCategory:int
+    value:float
+    incomeDate:str
