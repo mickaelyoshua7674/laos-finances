@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS fato_income;
 DROP TABLE IF EXISTS fato_expense;
+DROP TABLE IF EXISTS dim_user;
 DROP TABLE IF EXISTS "dim_expenseSubCategory";
 DROP TABLE IF EXISTS "dim_expenseCategory";
 DROP TABLE IF EXISTS "dim_incomeCategory";
@@ -94,12 +95,22 @@ INSERT INTO "dim_expenseSubCategory" ("idExpenseCategory", description) VALUES
 	(13,'animal doméstico'), (13,'plano funerário'), (13,'presente'), (13,'mesada');
 
 -----------------------------------------------------------------------------------------------------------------------------------------
+-- DIM User
+CREATE TABLE dim_user (
+	"idUser" INT GENERATED ALWAYS AS IDENTITY,
+	description VARCHAR(50) NOT NULL,
+	CONSTRAINT "pk_user" PRIMARY KEY ("idUser")
+);
+INSERT INTO dim_user (description) VALUES ('laos');
+-----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Expenses
 CREATE TABLE fato_expense (
+	"idUser" INT NOT NULL,
 	"idFrequencyType" INT NOT NULL,
 	"idExpenseSubCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
 	"expenseDate" DATE,
+	CONSTRAINT "fk_expense_user" FOREIGN KEY ("idUser") REFERENCES dim_user("idUser"),
 	CONSTRAINT "fk_expense_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_expenseSubCategory" FOREIGN KEY ("idExpenseSubCategory") REFERENCES "dim_expenseSubCategory"("idExpenseSubCategory")
 );
@@ -118,10 +129,12 @@ INSERT INTO "dim_incomeCategory" (description) VALUES
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Income
 CREATE TABLE fato_income (
+	"idUser" INT NOT NULL,
 	"idFrequencyType" INT NOT NULL,
 	"idIncomeCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
 	"incomeDate" DATE,
+	CONSTRAINT "fk_expense_user" FOREIGN KEY ("idUser") REFERENCES dim_user("idUser"),
 	CONSTRAINT "fk_income_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_incomeCategory" FOREIGN KEY ("idIncomeCategory") REFERENCES "dim_incomeCategory"("idIncomeCategory")
 );

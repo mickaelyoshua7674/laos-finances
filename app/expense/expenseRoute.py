@@ -5,12 +5,12 @@ from database import engine
 expenses = APIRouter(prefix="/expenses", tags=["expenses"])
 
 @expenses.post("/", response_model=Expense)
-async def addExpense(e:Expense) -> dict[str, str|int|float]:
+async def addExpense(e:Expense) -> Expense:
     insert = e.model_dump()
     async with engine.connect() as conn:
         await conn.execute(insertScriptExpense, insert)
         await conn.commit()
-    return e.model_dump()
+    return e
 
 @expenses.get("/")
 async def getExpenseAll():
