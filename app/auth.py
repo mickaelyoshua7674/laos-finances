@@ -1,7 +1,9 @@
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
+from datetime import timedelta, datetime, timezone
 from fastapi import APIRouter
+import jwt
 from models import Token, TokenData, User, UserInDB
 from database import engine, text
 import asyncio
@@ -32,6 +34,18 @@ async def authenticateUser(userName:str, password:str) -> User | bool:
     u = await getUser(userName)
     if not u:
         return False
-    if not verifyPassword(password, u.password):
+    if not await verifyPassword(password, u.password):
         return False
     return User
+
+async def createAccessToken(data:dict, expiresDelta: timedelta|None=None):
+    to_encode = data.copy()
+    if expiresDelta:
+        expire = datetime.now(timezone.utc) + expiresDelta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"expiration":expire})
+    encodeJWT = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encodeJWT
+
+
