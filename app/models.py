@@ -1,6 +1,5 @@
-from pydantic import BaseModel, Field, field_validator, SecretStr
-from sqlalchemy import text, TextClause
-from database import engine
+from pydantic import BaseModel, Field, field_validator, SecretStr, EmailStr
+from database import engine, text, TextClause
 from datetime import date
 import asyncio
 
@@ -20,10 +19,17 @@ async def allPK_FK():
     return await asyncio.gather(*tasks)
 pkUserName, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.run(allPK_FK())
 
+
+class Token(BaseModel):
+    accessToken:str
+    tokenType:str
+class TokenData(BaseModel):
+    userName:str
+
 class User(BaseModel):
     userName:str
     name:str
-    email:str = Field(pattern=r"/^[a-z0-9.]+@[a-z0-9]+\.[a-z]+\.([a-z]+)?$/i")
+    email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
     password:SecretStr
 
     @field_validator("userName")
@@ -33,6 +39,8 @@ class User(BaseModel):
         else:
             return u
 
+class UserInDB(User):
+    hashedPassword:str
 
 class Expense(BaseModel):
     userName:str
