@@ -23,14 +23,13 @@ pkUserName, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.ru
 class Token(BaseModel):
     accessToken:str
     tokenType:str
-class TokenData(BaseModel):
-    userName:str
 
 class User(BaseModel):
     userName:str
     name:str
     email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
     password:SecretStr
+    disabled:bool
 
     @field_validator("userName")
     def checkUserName(cls, u:str) -> str:
@@ -38,9 +37,6 @@ class User(BaseModel):
             raise(ValueError("Username not registred."))
         else:
             return u
-
-class UserInDB(User):
-    hashedPassword:str
 
 class Expense(BaseModel):
     userName:str

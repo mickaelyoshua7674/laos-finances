@@ -1,9 +1,9 @@
-from expenseRoute import expenses
+from routers import auth
 from fastapi import FastAPI
 from os import environ
 
 app = FastAPI()
-app.include_router(expenses)
+app.include_router(auth)
 
 @app.get("/")
 async def home():
