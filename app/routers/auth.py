@@ -73,11 +73,6 @@ async def getCurrentUser(token:Annotated[str, Depends(oauth2Scheme)]) -> User:
         raise credentialException
     return user
 
-async def getCurrentActiveUser(currentUser:Annotated[User, Depends(getCurrentUser)]):
-    if currentUser.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return currentUser
-
 @auth.post("/token")
 @auth.post("/token/")
 async def loginForAccessToken(formData:Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
@@ -94,11 +89,11 @@ async def loginForAccessToken(formData:Annotated[OAuth2PasswordRequestForm, Depe
 
 @auth.get("/user/me")
 @auth.get("/user/me/")
-async def readUserMe(currentUser:Annotated[User, Depends(getCurrentActiveUser)]) -> User:
+async def readUserMe(currentUser:Annotated[User, Depends(getCurrentUser)]) -> User:
     return currentUser
 
 @auth.get("/user/me/items")
 @auth.get("/user/me/items/")
-async def readOwnItems(currentUser:Annotated[User, Depends(getCurrentActiveUser)], conn=Depends(getConn)) -> list[Expense]:
+async def readOwnItems(currentUser:Annotated[User, Depends(getCurrentUser)], conn=Depends(getConn)) -> list[Expense]:
     res = await conn.execute(text(f'SELECT * FROM fato_expense WHERE "userName"=\'{currentUser.userName}\';'))
     return [Expense(**{k:v for k,v in zip(Expense.model_fields, e)}) for e in res.fetchall()]

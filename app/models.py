@@ -26,17 +26,13 @@ class Token(BaseModel):
 
 class User(BaseModel):
     userName:str
-    name:str
     email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+    name:str
     password:SecretStr
-    disabled:bool
 
-    @field_validator("userName")
-    def checkUserName(cls, u:str) -> str:
-        if u not in pkUserName:
-            raise(ValueError("Username not registred."))
-        else:
-            return u
+    @classmethod
+    def getInsertScript(cls) -> TextClause:
+        return text("INSERT INTO dim_user VALUES (:userName,:email,:name,:password);")
 
 class Expense(BaseModel):
     userName:str

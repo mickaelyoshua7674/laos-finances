@@ -1,9 +1,11 @@
-from routers import auth
+from routers.auth import auth
+from routers.user import users
 from fastapi import FastAPI
 from os import environ
 
 app = FastAPI()
 app.include_router(auth)
+app.include_router(users)
 
 @app.get("/")
 async def home():

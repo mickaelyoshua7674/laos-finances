@@ -98,12 +98,12 @@ INSERT INTO "dim_expenseSubCategory" ("idExpenseCategory", description) VALUES
 -- DIM User
 CREATE TABLE dim_user (
 	"userName" TEXT,
+	email TEXT UNIQUE,
 	name TEXT NOT NULL,
-	email TEXT NOT NULL,
 	password TEXT NOT NULL,
-	CONSTRAINT "pk_user" PRIMARY KEY ("userName")
+	CONSTRAINT "pk_userName" PRIMARY KEY ("userName")
 );
-INSERT INTO dim_user VALUES ('laos','laos mycr','laos@mycr.com','0000');
+
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Expenses
 CREATE TABLE fato_expense (
