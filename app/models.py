@@ -1,9 +1,10 @@
 from pydantic import BaseModel, Field, field_validator, SecretStr, EmailStr
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from database import engine, text, TextClause
 from datetime import date
 import asyncio
 
-async def getUser() -> set:
+async def getUserSet() -> set:
     async with engine.connect() as conn:
         res = await conn.execute(text(f'SELECT username FROM users;'))
         return {v[0] for v in res.fetchall()}
@@ -12,13 +13,16 @@ async def getFK(fk:str) -> set:
         res = await conn.execute(text(f'SELECT "{fk}" FROM "dim_{fk[2].lower()+fk[3:]}";'))
         return {v[0] for v in res.fetchall()}
 async def allPK_FK():
-    tasks = [asyncio.create_task(getUser()),
+    tasks = [asyncio.create_task(getUserSet()),
              asyncio.create_task(getFK("idFrequencyType")),
              asyncio.create_task(getFK("idExpenseSubCategory")),
              asyncio.create_task(getFK("idIncomeCategory"))]
     return await asyncio.gather(*tasks)
 pkUsername, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.run(allPK_FK())
 
+class JWTBearer(HTTPBearer):
+    def __init__(self, auto_error:bool=True):
+        super(JWTBearer, self).__init__(auto_error=auto_error)
 
 class Token(BaseModel):
     accessToken:str

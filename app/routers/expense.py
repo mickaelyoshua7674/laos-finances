@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Body, Depends
-from models import Expense, text
+from models import Expense, JWTBearer, text
 from database import getConn
 
 expenses = APIRouter(prefix="/expenses", tags=["expenses"])
 
-@expenses.post("", response_model=Expense)
+@expenses.post("", response_model=Expense, dependencies=[Depends(JWTBearer())])
 @expenses.post("/", response_model=Expense)
 async def addExpense(e:Expense, conn=Depends(getConn)) -> Expense:
     insert = e.model_dump()

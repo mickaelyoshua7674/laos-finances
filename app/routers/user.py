@@ -11,10 +11,11 @@ from .income import incomes
 from database import getConn, engine, text
 from typing import Annotated
 from models import User
+from os import environ
 
-SECRET_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJVc2VyIjoibGFvcyJ9.MvNzpRt3bxwP5EQkLX-aTxXFRm_IDU5DeooOnH0UvIk"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRES_MINUTES = 30
+SECRET_KEY = environ["SECRET_KEY"]
+ALGORITHM = environ["ALGORITHM"]
+ACCESS_TOKEN_EXPIRES_MINUTES = int(environ["ACCESS_TOKEN_EXPIRES_MINUTES"])
 
 users = APIRouter(prefix="/users",tags=["users"])
 users.include_router(expenses)
@@ -65,19 +66,19 @@ async def getCurrentUser(token:Annotated[str, Depends(oauth2Scheme)]) -> User:
         raise credentialException
     return user
 
-@users.post("/register", response_model=User)
-@users.post("/register/", response_model=User)
-async def register(u:User, conn=Depends(getConn)) -> User:
+@users.post("/register")
+@users.post("/register/")
+async def register(u:User, conn=Depends(getConn)) -> str:
     insert = u.model_dump()
     if await getUser(username=insert["username"]) is not None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="username already in use")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Username already in use")
     if await getUser(email=insert["email"]) is not None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email already registered")
 
     insert["password"] = pwdContext.hash(insert["password"].get_secret_value())
     await conn.execute(u.getInsertScript(), insert)
     await conn.commit()
-    return u
+    return await createAccessToken(data={"sub":u.username}, expiresDelta=timedelta(minutes=ACCESS_TOKEN_EXPIRES_MINUTES))
 
 @users.post("/login")
 @users.post("/login/")
