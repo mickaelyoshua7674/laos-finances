@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS fato_income;
 DROP TABLE IF EXISTS fato_expense;
-DROP TABLE IF EXISTS dim_user;
+DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS "dim_expenseSubCategory";
 DROP TABLE IF EXISTS "dim_expenseCategory";
 DROP TABLE IF EXISTS "dim_incomeCategory";
@@ -96,23 +96,23 @@ INSERT INTO "dim_expenseSubCategory" ("idExpenseCategory", description) VALUES
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM User
-CREATE TABLE dim_user (
-	"userName" TEXT,
+CREATE TABLE users (
+	username TEXT,
 	email TEXT UNIQUE,
 	name TEXT NOT NULL,
 	password TEXT NOT NULL,
-	CONSTRAINT "pk_userName" PRIMARY KEY ("userName")
+	CONSTRAINT "pk_username" PRIMARY KEY (username)
 );
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Expenses
 CREATE TABLE fato_expense (
-	"userName" TEXT,
+	username TEXT,
 	"idFrequencyType" INT NOT NULL,
 	"idExpenseSubCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
 	"expenseDate" DATE,
-	CONSTRAINT "fk_expense_user" FOREIGN KEY ("userName") REFERENCES dim_user("userName"),
+	CONSTRAINT "fk_expense_user" FOREIGN KEY (username) REFERENCES users(username),
 	CONSTRAINT "fk_expense_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_expenseSubCategory" FOREIGN KEY ("idExpenseSubCategory") REFERENCES "dim_expenseSubCategory"("idExpenseSubCategory")
 );
@@ -131,12 +131,12 @@ INSERT INTO "dim_incomeCategory" (description) VALUES
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Income
 CREATE TABLE fato_income (
-	"userName" TEXT,
+	username TEXT,
 	"idFrequencyType" INT NOT NULL,
 	"idIncomeCategory" INT NOT NULL,
 	value FLOAT NOT NULL,
 	"incomeDate" DATE,
-	CONSTRAINT "fk_expense_user" FOREIGN KEY ("userName") REFERENCES dim_user("userName"),
+	CONSTRAINT "fk_expense_user" FOREIGN KEY (username) REFERENCES users(username),
 	CONSTRAINT "fk_income_frequencyType" FOREIGN KEY ("idFrequencyType") REFERENCES "dim_frequencyType"("idFrequencyType"),
 	CONSTRAINT "fk_incomeCategory" FOREIGN KEY ("idIncomeCategory") REFERENCES "dim_incomeCategory"("idIncomeCategory")
 );

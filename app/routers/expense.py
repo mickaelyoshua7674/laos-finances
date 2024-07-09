@@ -20,6 +20,6 @@ async def getExpenseAll(conn=Depends(getConn)) -> list[Expense]:
 
 @expenses.get("/user")
 @expenses.get("/user/")
-async def getExpenseUser(userName:str=Body(), conn=Depends(getConn)) -> list[Expense]:
-    res = await conn.execute(text(f'SELECT * FROM fato_expense WHERE "userName"=\'{userName}\';'))
+async def getExpenseUser(username:str=Body(), conn=Depends(getConn)) -> list[Expense]:
+    res = await conn.execute(text(f'SELECT * FROM fato_expense WHERE username=\'{username}\';'))
     return [Expense(**{k:v for k,v in zip(Expense.model_fields, e)}) for e in res.fetchall()]

@@ -5,7 +5,7 @@ import asyncio
 
 async def getUser() -> set:
     async with engine.connect() as conn:
-        res = await conn.execute(text(f'SELECT "userName" FROM dim_user;'))
+        res = await conn.execute(text(f'SELECT username FROM users;'))
         return {v[0] for v in res.fetchall()}
 async def getFK(fk:str) -> set:
     async with engine.connect() as conn:
@@ -17,7 +17,7 @@ async def allPK_FK():
              asyncio.create_task(getFK("idExpenseSubCategory")),
              asyncio.create_task(getFK("idIncomeCategory"))]
     return await asyncio.gather(*tasks)
-pkUserName, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.run(allPK_FK())
+pkUsername, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.run(allPK_FK())
 
 
 class Token(BaseModel):
@@ -25,26 +25,26 @@ class Token(BaseModel):
     tokenType:str
 
 class User(BaseModel):
-    userName:str
+    username:str
     email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
     name:str
     password:SecretStr
 
     @classmethod
     def getInsertScript(cls) -> TextClause:
-        return text("INSERT INTO dim_user VALUES (:userName,:email,:name,:password);")
+        return text("INSERT INTO users VALUES (:username,:email,:name,:password);")
 
 class Expense(BaseModel):
-    userName:str
+    username:str
     idFrequencyType:int
     idExpenseSubCategory:int
     value:float = Field(gt=0)
     expenseDate:date
 
-    @field_validator("userName")
-    def checkUserName(cls, u:str) -> str:
-        if u not in pkUserName:
-            raise(ValueError("Username not registred."))
+    @field_validator("username")
+    def checkusername(cls, u:str) -> str:
+        if u not in pkUsername:
+            raise(ValueError("username not registred."))
         else:
             return u
 
@@ -64,7 +64,7 @@ class Expense(BaseModel):
     
     @classmethod
     def getInsertScript(cls) -> TextClause:
-        return text("INSERT INTO fato_expense VALUES (:userName,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);")
+        return text("INSERT INTO fato_expense VALUES (:username,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate);")
 
 
 class Income(BaseModel):
