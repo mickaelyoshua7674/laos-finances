@@ -1,9 +1,13 @@
+from routers.expense import expenses
+from routers.income import incomes
 from routers.user import users
 from fastapi import FastAPI
 from os import environ
 
 app = FastAPI()
 app.include_router(users)
+app.include_router(expenses)
+app.include_router(incomes)
 
 @app.get("/")
 async def home():

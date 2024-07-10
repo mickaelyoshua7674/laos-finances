@@ -1,8 +1,15 @@
 from pydantic import BaseModel, Field, field_validator, SecretStr, EmailStr
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Request, HTTPException
 from database import engine, text, TextClause
+
 from datetime import date
+import time
 import asyncio
+
+from jwt.exceptions import InvalidTokenError
+import jwt
+from os import environ
 
 async def getUserSet() -> set:
     async with engine.connect() as conn:
@@ -20,9 +27,36 @@ async def allPK_FK():
     return await asyncio.gather(*tasks)
 pkUsername, fkFrequencyType, fkExpenseSubCategory, fkIncomeCategory = asyncio.run(allPK_FK())
 
+def decodeJWT(token:str) -> dict|None:
+    decodedToken = jwt.decode(token, environ["SECRET_KEY"], algorithms=[environ["ALGORITHM"]])
+    if decodedToken["expires"] >= time.time():
+        return decodedToken
+
 class JWTBearer(HTTPBearer):
     def __init__(self, auto_error:bool=True):
         super(JWTBearer, self).__init__(auto_error=auto_error)
+    async def __call__(self, request:Request):
+        credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(request)
+        if credentials:
+            if not credentials.scheme == "Bearer":
+                raise HTTPException(status_code=403, detail="Invalid authetication shceme.")
+            if not self.verifyJWT(credentials.credentials):
+                raise HTTPException(status_code=403, detail="Expired token.")
+            request.state.token = credentials.credentials
+        else:
+            raise HTTPException(status_code=403, detail="Invalid authorization code.")
+    
+    def verifyJWT(self, token:str) -> bool:
+        isTokenValid:bool = False
+
+        try:
+            payload = decodeJWT(token)
+        except InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid token.")
+            
+        if payload:
+            isTokenValid = True
+        return isTokenValid
 
 class Token(BaseModel):
     accessToken:str
