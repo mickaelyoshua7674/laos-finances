@@ -24,8 +24,3 @@ asyncEngine = create_async_engine(engineURLAsync, poolclass=NullPool)
 async def getConn() -> AsyncGenerator[AsyncConnection,AsyncConnection]:
     async with asyncEngine.connect() as conn:
         yield conn
-    # conn = await asyncEngine.connect()
-    # try:
-    #     yield conn
-    # finally:
-    #     await conn.close()

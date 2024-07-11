@@ -24,7 +24,7 @@ async def checkPassword(password:str, storedPassword:str) -> bool:
 async def createAccessToken(username:str):
     toEncode = {
         "username":username,
-        "expires":time.time() + 600
+        "expires":time.time() + 7*24*60*60
         }
     return jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -55,9 +55,9 @@ class JWTBearer(HTTPBearer):
         credentials:HTTPAuthorizationCredentials|None = await super(JWTBearer, self).__call__(request)
         if credentials:
             if not credentials.scheme == "Bearer":
-                raise HTTPException(status_code=403, detail="Invalid authetication shceme.")
+                raise HTTPException(status_code=403, detail="Invalid authetication scheme.")
             if not self.verifyJWT(credentials.credentials):
-                raise HTTPException(status_code=403, detail="Expired token.")
+                raise HTTPException(status_code=403, detail="Session expired, please login again.")
             request.state.token = credentials.credentials
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
