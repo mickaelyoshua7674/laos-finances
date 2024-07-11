@@ -9,9 +9,11 @@ expenses = APIRouter(prefix="/expenses", tags=["expenses"])
 async def addExpense(e:Expense, request:Request, conn=Depends(getConn)) -> Expense:
     JWTusername = decodeJWT(request.state.token)["username"]
     if JWTusername == e.username:
-        await conn.execute(e.getInsertScript(), e.model_dump())
+        insertData = e.model_dump()
+        insertData.pop("id")
+        res = await conn.execute(e.getInsertScript(), insertData)
         await conn.commit()
-        return e
+        return Expense(id=res.fetchone()[0], **insertData)
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
 @expenses.get("/", dependencies=[Depends(JWTBearer())])

@@ -1,3 +1,1 @@
-print("Olá")
-print()
-print("bom dia!")
+d = {"foo":"bar", "hello":"world"}
