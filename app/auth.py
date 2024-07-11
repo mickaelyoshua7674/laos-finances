@@ -1,10 +1,15 @@
-import time
 from passlib.context import CryptContext
+from jwt.exceptions import InvalidTokenError
 import jwt
 
-from database import engine, text
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Request, HTTPException
+
+from database import asyncEngine, text
 from models import User
+
 from os import environ
+import time
 
 SECRET_KEY = environ["SECRET_KEY"]
 ALGORITHM = environ["ALGORITHM"]
@@ -31,8 +36,40 @@ async def checkUserExist(username:str|None=None, email:str|None=None) -> User|No
     else:
         raise ValueError("Give a 'username' or 'email'")
 
-    async with engine.connect() as conn:
+    async with asyncEngine.connect() as conn:
         res = await conn.execute(script)
     result = res.fetchall()
     if result:
         return User(**{k:v for k,v in zip(User.model_fields, result[0])})
+
+def decodeJWT(token:str) -> dict|None:
+    decodedToken = jwt.decode(token, environ["SECRET_KEY"], algorithms=[environ["ALGORITHM"]])
+    if decodedToken["expires"] >= time.time():
+        return decodedToken
+
+class JWTBearer(HTTPBearer):
+    def __init__(self, auto_error:bool=True):
+        super(JWTBearer, self).__init__(auto_error=auto_error)
+
+    async def __call__(self, request:Request):
+        credentials:HTTPAuthorizationCredentials|None = await super(JWTBearer, self).__call__(request)
+        if credentials:
+            if not credentials.scheme == "Bearer":
+                raise HTTPException(status_code=403, detail="Invalid authetication shceme.")
+            if not self.verifyJWT(credentials.credentials):
+                raise HTTPException(status_code=403, detail="Expired token.")
+            request.state.token = credentials.credentials
+        else:
+            raise HTTPException(status_code=403, detail="Invalid authorization code.")
+    
+    def verifyJWT(self, token:str) -> bool:
+        isTokenValid:bool = False
+
+        try:
+            payload = decodeJWT(token)
+        except InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid token.")
+            
+        if payload:
+            isTokenValid = True
+        return isTokenValid

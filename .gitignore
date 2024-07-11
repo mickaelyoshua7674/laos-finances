@@ -41,3 +41,6 @@ Database-data/
 
 # Pgadmin4 data
 pgadmin-files/
+
+# VSCode
+.vscode/
