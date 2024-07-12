@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, Body
+from fastapi import APIRouter, Depends, Request, HTTPException
 from auth import JWTBearer, decodeJWT, checkUserExist
 from models import Expense, text
 from database import getConn
@@ -6,7 +6,7 @@ from database import getConn
 expenses = APIRouter(prefix="/expenses", tags=["expenses"])
 
 @expenses.post("/", dependencies=[Depends(JWTBearer())])
-async def add(request:Request, data:dict=Body(), conn=Depends(getConn)) -> Expense:
+async def add(request:Request, data:dict, conn=Depends(getConn)) -> Expense:
     e = Expense(**dict({"id":0}, **data))
     if decodeJWT(request.state.token)["username"] == e.username:
         insertData = e.model_dump()
@@ -17,8 +17,9 @@ async def add(request:Request, data:dict=Body(), conn=Depends(getConn)) -> Expen
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
 @expenses.get("/{username}", dependencies=[Depends(JWTBearer())])
-async def get_all_user(request:Request, username:str, conn=Depends(getConn)) -> list[Expense]:
-    await checkUserExist(username=username)
+async def get_all(request:Request, username:str, conn=Depends(getConn)) -> list[Expense]:
+    if not await checkUserExist(username=username):
+        raise HTTPException(status_code=404, detail="Username not found.")
     if decodeJWT(request.state.token)["username"] == username:
         res = await conn.execute(text(f"SELECT * FROM fato_expense WHERE username='{username}';"))
         return [Expense.fromList(values) for values in res.fetchall()]
@@ -38,7 +39,7 @@ async def delete(request:Request, id:int, conn=Depends(getConn)) -> dict:
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
 @expenses.put("/", response_model=Expense, dependencies=[Depends(JWTBearer())])
-async def update(request:Request, e:Expense=Body(), conn=Depends(getConn)) -> Expense:
+async def update(request:Request, e:Expense, conn=Depends(getConn)) -> Expense:
     if not e.validateID():
         raise HTTPException(status_code=404, detail="id not found.")
     if decodeJWT(request.state.token)["username"] == e.username:
@@ -49,4 +50,4 @@ async def update(request:Request, e:Expense=Body(), conn=Depends(getConn)) -> Ex
         await conn.commit()
         res = await conn.execute(text(f"SELECT * FROM fato_expense WHERE id={e.id};"))
         return Expense.fromList(res.fetchone())
-    raise HTTPException(status_code=401, detail="JWT user does not match the user in request. User may not be registered.")
+    raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
