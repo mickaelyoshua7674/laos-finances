@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, SecretStr, EmailStr
 from database import engine, text, TextClause
-from typing import Optional
 from datetime import date
 
 def getUserSet() -> set:
@@ -28,7 +27,7 @@ class User(BaseModel):
         return text("INSERT INTO users VALUES (:username,:email,:name,:password);")
 
 class Expense(BaseModel):
-    id:int
+    id:int = Field(ge=0)
     username:str
     idFrequencyType:int
     idExpenseSubCategory:int
@@ -60,6 +59,14 @@ class Expense(BaseModel):
     def getInsertScript(cls) -> TextClause:
         return text(
             'INSERT INTO fato_expense (username,"idFrequencyType","idExpenseSubCategory",value,"expenseDate") VALUES  (:username,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate) RETURNING id;')
+
+    def getUpdateScript(self) -> TextClause:
+        return text(
+        f'UPDATE fato_expense SET "idFrequencyType"=:idFrequencyType, "idExpenseSubCategory"=:idExpenseSubCategory, value=:value, "expenseDate"=:expenseDate WHERE id={self.id};')
+    
+    @classmethod
+    def fromList(cls, tpl:list|tuple):
+        return cls(**{k:v for k,v in zip(cls.model_fields,tpl)})
 
 
 class Income(BaseModel):
