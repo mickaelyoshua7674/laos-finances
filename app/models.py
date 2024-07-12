@@ -12,10 +12,6 @@ def getFK(fk:str) -> set:
         return {v[0] for v in res.fetchall()}
 fkIncomeCategory = getFK("idIncomeCategory")
 
-class Token(BaseModel):
-    accessToken:str
-    tokenType:str
-
 class User(BaseModel):
     username:str
     email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
@@ -64,6 +60,13 @@ class Expense(BaseModel):
         return text(
         f'UPDATE fato_expense SET "idFrequencyType"=:idFrequencyType, "idExpenseSubCategory"=:idExpenseSubCategory, value=:value, "expenseDate"=:expenseDate WHERE id={self.id};')
     
+    def validateID(self) -> bool:
+        with engine.connect() as conn:
+            res = conn.execute(text(f"SELECT id FROM fato_expense WHERE id={self.id}")).fetchone()
+        if res:
+            return True
+        return False
+
     @classmethod
     def fromList(cls, tpl:list|tuple):
         return cls(**{k:v for k,v in zip(cls.model_fields,tpl)})

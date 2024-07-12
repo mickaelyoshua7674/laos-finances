@@ -31,16 +31,19 @@ async def createAccessToken(username:str):
 async def checkUserExist(username:str|None=None, email:str|None=None) -> User|None:
     if username is not None:
         script = text(f'SELECT * FROM users WHERE username=\'{username}\';')
+        exp = HTTPException(status_code=404, detail="Username not found.")
     elif email is not None:
         script = text(f'SELECT * FROM users WHERE email=\'{email}\';')
+        exp = HTTPException(status_code=404, detail="Email not found.")
     else:
         raise ValueError("Give a 'username' or 'email'")
 
     async with asyncEngine.connect() as conn:
         res = await conn.execute(script)
-    result = res.fetchall()
+        result = res.fetchall()
     if result:
         return User(**{k:v for k,v in zip(User.model_fields, result[0])})
+    raise exp
 
 def decodeJWT(token:str) -> dict|None:
     decodedToken = jwt.decode(token, environ["SECRET_KEY"], algorithms=[environ["ALGORITHM"]])
