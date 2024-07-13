@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
-from auth import OAuth2PasswordBearerWithCookie, decodeJWT, checkUserExist, createAccessToken
+from auth import oauth2_scheme, decodeJWT, checkUserExist, createAccessToken
 from models import Expense, text
 from database import getConn
 import time
 
 expenses = APIRouter(prefix="/expenses", tags=["expenses"])
 
-@expenses.post("/", dependencies=[Depends(OAuth2PasswordBearerWithCookie(tokenUrl="/login"))])
+@expenses.post("/", dependencies=[Depends(oauth2_scheme)])
 async def add(request:Request, response:Response, data:dict, conn=Depends(getConn)) -> Expense:
     e = Expense(**dict({"id":0}, **data))
     if decodeJWT(request.cookies.get("access_token"))["email"] == e.email:
@@ -20,19 +20,19 @@ async def add(request:Request, response:Response, data:dict, conn=Depends(getCon
         return Expense(id=res.fetchone()[0], **insertData) 
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
-@expenses.get("/{email}", dependencies=[Depends(OAuth2PasswordBearerWithCookie(tokenUrl="/login"))])
+@expenses.get("/{email}", dependencies=[Depends(oauth2_scheme)])
 async def get_all(request:Request, response:Response, email:str, conn=Depends(getConn)) -> list[Expense]:
     if not await checkUserExist(email):
         raise HTTPException(status_code=404, detail="Email not found.")
     if decodeJWT(request.cookies.get("access_token"))["email"] == email:
-        res = await conn.execute(text(f"SELECT * FROM fato_expense WHERE email='{email}';"))
+        res = await conn.execute(text(f"SELECT * FROM fato_expense WHERE email='{email}' ORDER BY id;"))
 
         await createAccessToken(data={"email":email, "expires":time.time() + 2*24*60*60}, setCookie=True, response=response)
 
         return [Expense.fromList(values) for values in res.fetchall()]
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
-@expenses.delete("/{id}", dependencies=[Depends(OAuth2PasswordBearerWithCookie(tokenUrl="/login"))])
+@expenses.delete("/{id}", dependencies=[Depends(oauth2_scheme)])
 async def delete(request:Request, response:Response, id:int, conn=Depends(getConn)) -> dict:
     res = await conn.execute(text(f"SELECT * FROM fato_expense WHERE id={id};"))
     data = res.fetchone()
@@ -48,7 +48,7 @@ async def delete(request:Request, response:Response, id:int, conn=Depends(getCon
         return {"message":"Expense deleted."}
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
-@expenses.put("/", response_model=Expense, dependencies=[Depends(OAuth2PasswordBearerWithCookie(tokenUrl="/login"))])
+@expenses.put("/", response_model=Expense, dependencies=[Depends(oauth2_scheme)])
 async def update(request:Request, response:Response, e:Expense, conn=Depends(getConn)) -> Expense:
     if not e.validateID():
         raise HTTPException(status_code=404, detail="id not found.")

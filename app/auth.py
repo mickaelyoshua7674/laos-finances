@@ -67,3 +67,5 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
         if payload:
             isTokenValid = True
         return isTokenValid
+
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/login")
