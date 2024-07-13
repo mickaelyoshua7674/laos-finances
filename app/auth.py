@@ -2,8 +2,9 @@ from passlib.context import CryptContext
 from jwt.exceptions import InvalidTokenError
 import jwt
 
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Request, HTTPException
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
+from fastapi import Request, HTTPException, Response
+from fastapi.security import OAuth2
 
 from database import asyncEngine, text
 from models import User
@@ -21,55 +22,48 @@ async def hashPasword(password:str) -> str:
 async def checkPassword(password:str, storedPassword:str) -> bool:
     return pwdContext.verify(password, storedPassword)
 
-async def createAccessToken(username:str):
-    toEncode = {
-        "username":username,
-        "expires":time.time() + 7*24*60*60
-        }
-    return jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
+async def createAccessToken(data:dict, setCookie:bool=False, response:Response|None=None):
+    param = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    if setCookie:
+        response.set_cookie(key="access_token", value=f"Bearer {param}", httponly=True, secure=True)
+    return param
 
-async def checkUserExist(username:str|None=None, email:str|None=None) -> User|None:
-    if username is not None:
-        script = text(f'SELECT * FROM users WHERE username=\'{username}\';')
-    elif email is not None:
-        script = text(f'SELECT * FROM users WHERE email=\'{email}\';')
-    else:
-        raise ValueError("Give a 'username' or 'email'")
-
+async def checkUserExist(email:str) -> User|None:
     async with asyncEngine.connect() as conn:
-        res = await conn.execute(script)
-        result = res.fetchall()
+        res = await conn.execute(text(f"SELECT * FROM users WHERE email='{email}';"))
+        result = res.fetchone()
     if result:
-        return User(**{k:v for k,v in zip(User.model_fields, result[0])})
+        return User.fromList(result)
 
 def decodeJWT(token:str) -> dict|None:
-    decodedToken = jwt.decode(token, environ["SECRET_KEY"], algorithms=[environ["ALGORITHM"]])
+    decodedToken = jwt.decode(token.split(" ")[1], environ["SECRET_KEY"], algorithms=[environ["ALGORITHM"]])
     if decodedToken["expires"] >= time.time():
         return decodedToken
 
-class JWTBearer(HTTPBearer):
-    def __init__(self, auto_error:bool=True):
-        super(JWTBearer, self).__init__(auto_error=auto_error)
+class OAuth2PasswordBearerWithCookie(OAuth2):
+    def __init__(self, tokenUrl:str, scheme_name:str|None=None, scopes:dict[str, str]|None=None, auto_error:bool=True):
+        if not scopes:
+            scopes = {}
+        flows = OAuthFlowsModel(password={"tokenUrl":tokenUrl, "scopes":scopes})
+        super().__init__(flows=flows, scheme_name=scheme_name, auto_error=auto_error)
 
-    async def __call__(self, request:Request):
-        credentials:HTTPAuthorizationCredentials|None = await super(JWTBearer, self).__call__(request)
-        if credentials:
-            if not credentials.scheme == "Bearer":
-                raise HTTPException(status_code=403, detail="Invalid authetication scheme.")
-            if not self.verifyJWT(credentials.credentials):
-                raise HTTPException(status_code=403, detail="Session expired, please login again.")
-            request.state.token = credentials.credentials
-        else:
-            raise HTTPException(status_code=403, detail="Invalid authorization code.")
-    
+    async def __call__(self, request:Request) -> str|None:
+        token:str|None = request.cookies.get("access_token")
+        if token:
+            scheme, param = token.split(" ")
+            if self.auto_error:
+                if scheme.lower() != "bearer":
+                    raise HTTPException(status_code=401, detail="Not authenticated", headers={"WWW-Authenticate": "Bearer"})
+                if not self.verifyJWT(token):
+                    raise HTTPException(status_code=401, detail="Session expired, please login again.")
+            return param
+
     def verifyJWT(self, token:str) -> bool:
         isTokenValid:bool = False
-
         try:
             payload = decodeJWT(token)
         except InvalidTokenError:
             raise HTTPException(status_code=401, detail="Invalid token.")
-            
         if payload:
             isTokenValid = True
         return isTokenValid
