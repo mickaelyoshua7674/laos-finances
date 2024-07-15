@@ -8,9 +8,10 @@ from fastapi import Depends, HTTPException
 
 from auth import checkUserExist, hashPasword, checkPassword, createAccessToken
 from database import getConn
-from typing import Annotated
 from models import User
 import time
+
+ACCESS_TOKEN_EXPIRES_SECONDS = int(environ["ACCESS_TOKEN_EXPIRES_SECONDS"])
 
 app = FastAPI()
 app.include_router(expenses)
@@ -21,9 +22,12 @@ async def home():
     return {"message":"Home"}
 
 @app.post("/register")
-async def register(u:User, conn=Depends(getConn)) -> dict:
+async def register(data:dict, conn=Depends(getConn)) -> dict:
+    u = User(**data)
     insert = u.model_dump()
-    if await checkUserExist(insert["email"]) is not None:
+    insert.pop("userid")
+    print(insert)
+    if await checkUserExist(email=insert["email"]) is not None:
         raise HTTPException(status_code=401, detail="Email already registered")
 
     insert["password"] = await hashPasword(insert["password"].get_secret_value())
@@ -32,14 +36,14 @@ async def register(u:User, conn=Depends(getConn)) -> dict:
     return {"message":"User registered"}
 
 @app.post("/login")
-async def login(response:Response, formData:Annotated[OAuth2PasswordRequestForm, Depends()]) -> dict:
-    u = await checkUserExist(formData.username)
+async def login(response:Response, formData:OAuth2PasswordRequestForm=Depends()) -> str:
+    u = await checkUserExist(email=formData.username)
     if u is None:
         raise HTTPException(status_code=401, detail="Email incorrect.")
     elif not await checkPassword(formData.password, u.password.get_secret_value()):
         raise HTTPException(status_code=401, detail="Password incorrect.")
-    token = await createAccessToken(data={"email":u.email, "expires":time.time() + 2*24*60*60}, setCookie=True, response=response)
-    return {"access_token":token, "token_type":"bearer"}
+    await createAccessToken(data={"userid":str(u.userid), "expires":time.time() + ACCESS_TOKEN_EXPIRES_SECONDS}, setCookie=True, response=response)
+    return str(u.userid)
 
 if __name__ == "__main__":
     import uvicorn

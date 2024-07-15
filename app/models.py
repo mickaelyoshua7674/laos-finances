@@ -1,11 +1,8 @@
 from pydantic import BaseModel, Field, field_validator, SecretStr, EmailStr
 from database import engine, text, TextClause
 from datetime import date
+from uuid import UUID
 
-def getUserSet() -> set:
-    with engine.connect() as conn:
-        res = conn.execute(text(f'SELECT email FROM users;'))
-        return {v[0] for v in res.fetchall()}
 def getFK(fk:str) -> set:
     with engine.connect() as conn:
         res = conn.execute(text(f'SELECT "{fk}" FROM "dim_{fk[2].lower()+fk[3:]}";'))
@@ -13,32 +10,34 @@ def getFK(fk:str) -> set:
 fkIncomeCategory = getFK("idIncomeCategory")
 
 class User(BaseModel):
+    userid:UUID = UUID("e0a79a89-1f3d-4af2-b627-8b3a697347d9")
     email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
     name:str
     password:SecretStr
 
     @classmethod
     def getInsertScript(cls) -> TextClause:
-        return text("INSERT INTO users VALUES (:email,:name,:password);")
+        return text("INSERT INTO users (email,name,password) VALUES (:email,:name,:password);")
 
     @classmethod
     def fromList(cls, tpl:list|tuple):
         return cls(**{k:v for k,v in zip(cls.model_fields,tpl)})
 
 class Expense(BaseModel):
-    id:int = Field(ge=0)
-    email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+    id:int = Field(ge=0, default=0)
+    userid:UUID
     idFrequencyType:int
     idExpenseSubCategory:int
     value:float = Field(gt=0)
     expenseDate:date
 
-    @field_validator("email")
-    def checkusername(cls, u:str) -> str:
-        if u not in getUserSet():
-            raise ValueError("Email not registred.")
-        else:
-            return u
+    # @field_validator("userid")
+    # def checkuserid(cls, x:UUID) -> UUID:
+    #     print(x)
+    #     if x not in getUserIDSet():
+    #         raise ValueError("User ID not registred.")
+    #     else:
+    #         return x
 
     @field_validator("idFrequencyType")
     def checkFrequencyType(cls, x:int) -> int:
@@ -57,7 +56,7 @@ class Expense(BaseModel):
     @classmethod
     def getInsertScript(cls) -> TextClause:
         return text(
-            'INSERT INTO fato_expense (email,"idFrequencyType","idExpenseSubCategory",value,"expenseDate") VALUES  (:email,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate) RETURNING id;')
+        'INSERT INTO fato_expense (userid,"idFrequencyType","idExpenseSubCategory",value,"expenseDate") VALUES  (:userid,:idFrequencyType,:idExpenseSubCategory,:value,:expenseDate) RETURNING id;')
 
     def getUpdateScript(self) -> TextClause:
         return text(
