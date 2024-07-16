@@ -30,17 +30,17 @@ async def register(data:dict, conn=Depends(getConn)) -> dict:
     insert["password"] = await hashPasword(insert["password"].get_secret_value())
     res = await conn.execute(u.getInsertScript(), insert)
     await conn.commit()
-    return {"message":"User registered", "userid":str(res.fetchone()[0])}
+    return {"userid":str(res.fetchone()[0])}
 
 @app.post("/login")
-async def login(response:Response, formData:OAuth2PasswordRequestForm=Depends()) -> str:
+async def login(response:Response, formData:OAuth2PasswordRequestForm=Depends()) -> dict:
     u = await checkUserExist(email=formData.username)
     if u is None:
         raise HTTPException(status_code=401, detail="Email incorrect.")
     elif not await checkPassword(formData.password, u.password.get_secret_value()):
         raise HTTPException(status_code=401, detail="Password incorrect.")
     await createAccessToken(data={"userid":str(u.userid), "expires":time.time() + ACCESS_TOKEN_EXPIRES_SECONDS}, setCookie=True, response=response)
-    return str(u.userid)
+    return {"userid":str(u.userid)}
 
 if __name__ == "__main__":
     import uvicorn
