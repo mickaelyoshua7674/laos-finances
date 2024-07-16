@@ -1,14 +1,12 @@
-from routers.expense import expenses
-from routers.income import incomes
-from fastapi import FastAPI, Response
-from os import environ
-
+from fastapi import FastAPI, Response, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends, HTTPException
 
 from auth import checkUserExist, hashPasword, checkPassword, createAccessToken
+from routers.expense import expenses
+from routers.income import incomes
 from database import getConn
 from models import User
+from os import environ
 import time
 
 ACCESS_TOKEN_EXPIRES_SECONDS = int(environ["ACCESS_TOKEN_EXPIRES_SECONDS"])
@@ -26,14 +24,13 @@ async def register(data:dict, conn=Depends(getConn)) -> dict:
     u = User(**data)
     insert = u.model_dump()
     insert.pop("userid")
-    print(insert)
     if await checkUserExist(email=insert["email"]) is not None:
         raise HTTPException(status_code=401, detail="Email already registered")
 
     insert["password"] = await hashPasword(insert["password"].get_secret_value())
-    await conn.execute(u.getInsertScript(), insert)
+    res = await conn.execute(u.getInsertScript(), insert)
     await conn.commit()
-    return {"message":"User registered"}
+    return {"message":"User registered", "userid":str(res.fetchone()[0])}
 
 @app.post("/login")
 async def login(response:Response, formData:OAuth2PasswordRequestForm=Depends()) -> str:

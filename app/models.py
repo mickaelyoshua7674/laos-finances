@@ -17,7 +17,7 @@ class User(BaseModel):
 
     @classmethod
     def getInsertScript(cls) -> TextClause:
-        return text("INSERT INTO users (email,name,password) VALUES (:email,:name,:password);")
+        return text("INSERT INTO users (email,name,password) VALUES (:email,:name,:password) RETURNING userid;")
 
     @classmethod
     def fromList(cls, tpl:list|tuple):
