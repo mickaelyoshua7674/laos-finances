@@ -1,17 +1,23 @@
-# 'conftest.py' will share the fixtures across all files
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.pool import NullPool
-from sqlalchemy.engine import URL
-
-from os import environ
+from httpx import AsyncClient, ASGITransport
+import pytest_asyncio
 import pytest
 
-@pytest.fixture(scope="session")
-def my_engine():
-    engineURLAsync = URL.create(drivername=environ["DB_ASYNC_DRIVERNAME"],
-                                username=environ["DB_USERNAME"],
-                                password=environ["DB_PASSWORD"],
-                                host=environ["DB_HOST"],
-                                port=environ["DB_PORT"],
-                                database=environ["DB_NAME"])
-    return create_async_engine(engineURLAsync, poolclass=NullPool)
+from ..database import asyncEngine
+from ..main import app
+
+@pytest_asyncio.fixture(scope="session")
+async def client():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True) as ac:
+        yield ac
+
+@pytest_asyncio.fixture(scope="session")
+async def conn():
+    async with asyncEngine.connect() as conn:
+        yield conn
+
+@pytest.fixture
+def register_user():
+    return {"email":"test@test.com", "name":"test", "password":"0000"}
+@pytest.fixture
+def login_user():
+    return {"username":"test@test.com", "password":"0000"}

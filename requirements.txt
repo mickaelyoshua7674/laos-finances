@@ -3,6 +3,7 @@ SQLAlchemy[asyncio]==2.0.21
 psycopg2-binary==2.9.9
 asyncpg==0.29.0
 pytest-asyncio==0.23.7
+pytest-dependency==0.6.0
 bcrypt==4.0.1
 passlib==1.7.4
 pyjwt==2.8.0
