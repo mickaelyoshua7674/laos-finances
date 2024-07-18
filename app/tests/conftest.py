@@ -30,3 +30,11 @@ def add_expense():
             "idExpenseSubCategory": 3,
             "value": 1000,
             "expenseDate": "2024-07-13"}
+@pytest.fixture
+def put_expense():
+    return {"id": "",
+            "userid": "",
+            "idFrequencyType": 2,
+            "idExpenseSubCategory": 1,
+            "value": 5000,
+            "expenseDate": "2024-07-17"}

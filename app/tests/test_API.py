@@ -45,8 +45,8 @@ async def test_register(client_kwargs, conn, register_user):
     async with AsyncClient(**client_kwargs()) as ac:
         response = await ac.post("/register", json=register_user)
 
-    assert response.status_code == 200
     assert response.json()["userid"] == await get_userid(conn, register_user)
+    assert response.status_code == 200
 
     await remove_user(conn, register_user)
 
@@ -58,8 +58,8 @@ async def test_login(client_kwargs, conn, register_user, login_user):
         res_login = await ac.post("/login", data=login_user)
         print(res_login.json())
 
-    assert res_login.status_code == 200
     assert res_login.json()["userid"] == await get_userid(conn, register_user)
+    assert res_login.status_code == 200
 
     await remove_user(conn, register_user)
 
@@ -69,15 +69,81 @@ async def test_login(client_kwargs, conn, register_user, login_user):
 async def test_add_expense(client_kwargs, conn, register_user, add_expense):
     async with AsyncClient(**client_kwargs()) as ac:
         res_register = await ac.post("/register", json=register_user)
-        userid = res_register.json()["userid"]
-        add_expense["userid"] = userid
+    userid = res_register.json()["userid"]
+    add_expense["userid"] = userid
 
     async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
         res_add = await ac.post("/expenses", json=add_expense)
     id = await get_expenseid(conn, userid)
 
-    res_add.status_code == 200
     assert res_add.json()["id"] == id
+    res_add.status_code == 200
 
     await remove_expense(conn, id)
+    await remove_user(conn, register_user)
+
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_add_expense"])
+async def test_del_expense(client_kwargs, conn, register_user, add_expense):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_expense["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        res_add = await ac.post("/expenses", json=add_expense)
+        res_add_json = res_add.json()
+        id = res_add_json["id"]
+
+        res_del = await ac.delete(f"/expenses/{id}")
+    
+    assert res_del.json()["message"] == "Expense deleted."
+    assert res_del.status_code == 200
+
+    await remove_user(conn, register_user)
+
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_del_expense"])
+async def test_get_expense(client_kwargs, conn, register_user, add_expense):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_expense["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        res_add = await ac.post("/expenses", json=add_expense)
+        res_add_json = res_add.json()
+        id = res_add_json["id"]
+
+        res_get = await ac.get(f"/expenses/{userid}")
+
+        assert res_get.json()[0]["id"] == id
+        assert res_get.status_code == 200
+
+        await ac.delete(f"/expenses/{id}")
+    await remove_user(conn, register_user)
+
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_get_expense"])
+async def test_update_expense(client_kwargs, conn, register_user, add_expense, put_expense):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_expense["userid"] = userid
+    put_expense["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        res_add = await ac.post("/expenses", json=add_expense)
+        res_add_json = res_add.json()
+        id = res_add_json["id"]
+        put_expense["id"] = id
+
+        res_put = await ac.put("/expenses", json=put_expense)
+        res_put_json = res_put.json()
+
+        assert res_put_json != res_add_json
+        assert res_put_json["id"] == id
+        assert res_put.status_code == 200
+
+        await ac.delete(f"/expenses/{id}")
     await remove_user(conn, register_user)
