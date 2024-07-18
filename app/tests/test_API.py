@@ -55,7 +55,6 @@ async def test_register(client_kwargs, conn, register_user):
 async def test_login(client_kwargs, conn, register_user, login_user):
     async with AsyncClient(**client_kwargs()) as ac:
         await ac.post("/register", json=register_user)
-    async with AsyncClient(**client_kwargs()) as ac:
         res_login = await ac.post("/login", data=login_user)
         print(res_login.json())
 
@@ -70,8 +69,8 @@ async def test_login(client_kwargs, conn, register_user, login_user):
 async def test_add_expense(client_kwargs, conn, register_user, add_expense):
     async with AsyncClient(**client_kwargs()) as ac:
         res_register = await ac.post("/register", json=register_user)
-    userid = res_register.json()["userid"]
-    add_expense["userid"] = userid
+        userid = res_register.json()["userid"]
+        add_expense["userid"] = userid
 
     async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
         res_add = await ac.post("/expenses", json=add_expense)
