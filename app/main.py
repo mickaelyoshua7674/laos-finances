@@ -24,8 +24,8 @@ async def register(data:dict, conn=Depends(getConn)) -> dict:
     u = User(**data)
     insert = u.model_dump()
     insert.pop("userid")
-    if await checkUserExist(email=insert["email"]) is not None:
-        raise HTTPException(status_code=401, detail="Email already registered")
+    if await checkUserExist(username=insert["username"]) is not None:
+        raise HTTPException(status_code=401, detail="Username already registered")
 
     insert["password"] = await hashPasword(insert["password"].get_secret_value())
     res = await conn.execute(u.getInsertScript(), insert)
@@ -34,9 +34,9 @@ async def register(data:dict, conn=Depends(getConn)) -> dict:
 
 @app.post("/login")
 async def login(response:Response, formData:OAuth2PasswordRequestForm=Depends()) -> dict:
-    u = await checkUserExist(email=formData.username)
+    u = await checkUserExist(username=formData.username)
     if u is None:
-        raise HTTPException(status_code=401, detail="Email incorrect.")
+        raise HTTPException(status_code=401, detail="Username incorrect.")
     elif not await checkPassword(formData.password, u.password.get_secret_value()):
         raise HTTPException(status_code=401, detail="Password incorrect.")
     await createAccessToken(data={"userid":str(u.userid), "expires":time.time() + ACCESS_TOKEN_EXPIRES_SECONDS}, setCookie=True, response=response)

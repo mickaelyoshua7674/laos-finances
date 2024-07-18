@@ -98,7 +98,7 @@ INSERT INTO "dim_expenseSubCategory" ("idExpenseCategory", description) VALUES
 -- DIM User
 CREATE TABLE users (
 	userid UUID DEFAULT GEN_RANDOM_UUID(),
-	email TEXT UNIQUE NOT NULL,
+	username TEXT UNIQUE NOT NULL,
 	name TEXT NOT NULL,
 	password TEXT NOT NULL,
 	CONSTRAINT "pk_user" PRIMARY KEY (userid)

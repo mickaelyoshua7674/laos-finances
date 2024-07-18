@@ -29,7 +29,7 @@ async def add(request:Request, response:Response, data:dict, conn=Depends(getCon
 @expenses.get("/{userid}", dependencies=[Depends(oauth2_scheme)])
 async def get_all(request:Request, response:Response, userid:str, conn=Depends(getConn)) -> list[Expense]:
     if not await checkUserExist(userid=userid):
-        raise HTTPException(status_code=404, detail="Email not found.")
+        raise HTTPException(status_code=404, detail="Username not found.")
     if decodeJWT(request.cookies.get("access_token"))["userid"] == userid:
         res = await conn.execute(text(f"SELECT * FROM fato_expense WHERE userid='{userid}' ORDER BY id;"))
 

@@ -11,13 +11,13 @@ fkIncomeCategory = getFK("idIncomeCategory")
 
 class User(BaseModel):
     userid:UUID = UUID("e0a79a89-1f3d-4af2-b627-8b3a697347d9")
-    email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+    username:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
     name:str
     password:SecretStr
 
     @classmethod
     def getInsertScript(cls) -> TextClause:
-        return text("INSERT INTO users (email,name,password) VALUES (:email,:name,:password) RETURNING userid;")
+        return text("INSERT INTO users (username,name,password) VALUES (:username,:name,:password) RETURNING userid;")
 
     @classmethod
     def fromList(cls, tpl:list|tuple):
@@ -76,7 +76,7 @@ class Expense(BaseModel):
 
 class Income(BaseModel):
     id:int
-    email:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+    username:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
     idFrequencyType:int
     idIncomeCategory:int
     value:float

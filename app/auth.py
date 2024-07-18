@@ -28,13 +28,13 @@ async def createAccessToken(data:dict, setCookie:bool=False, response:Response|N
         response.set_cookie(key="access_token", value=f"Bearer {param}", httponly=True, secure=True)
     return param
 
-async def checkUserExist(userid:str|None=None, email:str|None=None) -> User|None:
+async def checkUserExist(userid:str|None=None, username:str|None=None) -> User|None:
     if userid:
         script = text(f"SELECT * FROM users WHERE userid='{userid}';")
-    elif email:
-        script = text(f"SELECT * FROM users WHERE email='{email}';")
+    elif username:
+        script = text(f"SELECT * FROM users WHERE username='{username}';")
     else:
-        raise ValueError("Inform userid or email")
+        raise ValueError("Inform userid or username")
 
     async with asyncEngine.connect() as conn:
         res = await conn.execute(script)
