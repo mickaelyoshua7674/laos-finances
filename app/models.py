@@ -31,14 +31,6 @@ class Expense(BaseModel):
     value:float = Field(gt=0)
     expenseDate:date
 
-    # @field_validator("userid")
-    # def checkuserid(cls, x:UUID) -> UUID:
-    #     print(x)
-    #     if x not in getUserIDSet():
-    #         raise ValueError("User ID not registred.")
-    #     else:
-    #         return x
-
     @field_validator("idFrequencyType")
     def checkFrequencyType(cls, x:int) -> int:
         if x not in getFK("idFrequencyType"):
@@ -73,11 +65,44 @@ class Expense(BaseModel):
     def fromList(cls, tpl:list|tuple):
         return cls(**{k:v for k,v in zip(cls.model_fields,tpl)})
 
-
 class Income(BaseModel):
-    id:int
-    username:EmailStr = Field(pattern=r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+    id:int = Field(ge=0, default=0)
+    userid:UUID
     idFrequencyType:int
     idIncomeCategory:int
-    value:float
-    incomeDate:str
+    value:float = Field(gt=0)
+    expenseDate:date
+
+    @field_validator("idFrequencyType")
+    def checkFrequencyType(cls, x:int) -> int:
+        if x not in getFK("idFrequencyType"):
+            raise ValueError("No match to constraint in Foreing Key idFrequencyType")
+        else:
+            return x
+
+    @field_validator("idIncomeCategory")
+    def checkIncomeCategory(cls, x:int) -> int:
+        if x not in getFK("idIncomeCategory"):
+            raise ValueError("No match to constraint in Foreing Key idIncomeCategory")
+        else:
+            return x
+    
+    @classmethod
+    def getInsertScript(cls) -> TextClause:
+        return text(
+        'INSERT INTO fato_income (userid,"idFrequencyType","idIncomeCategory",value,"expenseDate") VALUES  (:userid,:idFrequencyType,:idIncomeCategory,:value,:expenseDate) RETURNING id;')
+
+    def getUpdateScript(self) -> TextClause:
+        return text(
+        f'UPDATE fato_income SET "idFrequencyType"=:idFrequencyType, "idIncomeCatgory"=:idIncomeCategory, value=:value, "expenseDate"=:expenseDate WHERE id={self.id};')
+    
+    def validateID(self) -> bool:
+        with engine.connect() as conn:
+            res = conn.execute(text(f"SELECT id FROM fato_income WHERE id={self.id}")).fetchone()
+        if res:
+            return True
+        return False
+
+    @classmethod
+    def fromList(cls, tpl:list|tuple):
+        return cls(**{k:v for k,v in zip(cls.model_fields,tpl)})
