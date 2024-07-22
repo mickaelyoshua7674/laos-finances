@@ -13,6 +13,9 @@ incomes = APIRouter(prefix="/incomes", tags=["incomes"])
 @incomes.post("/", dependencies=[Depends(oauth2_scheme)])
 async def add(request:Request, response:Response, data:dict, conn=Depends(getConn)) -> Income:
     data["userid"] = UUID(data["userid"])
+    print()
+    print(data)
+    print()
     i = Income(**data)
     userid = str(i.userid)
     if decodeJWT(request.cookies.get("access_token"))["userid"] == userid:
@@ -52,7 +55,7 @@ async def delete(request:Request, response:Response, id:int, conn=Depends(getCon
 
         await createAccessToken(data={"userid":userid, "expires":time.time() + ACCESS_TOKEN_EXPIRES_SECONDS}, setCookie=True, response=response)
 
-        return {"message":"Expense deleted."}
+        return {"message":"Income deleted."}
     raise HTTPException(status_code=401, detail="JWT user does not match the user in request.")
 
 @incomes.put("/", response_model=Income, dependencies=[Depends(oauth2_scheme)])

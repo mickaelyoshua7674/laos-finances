@@ -38,3 +38,19 @@ def put_expense():
             "idExpenseSubCategory": 1,
             "value": 5000,
             "expenseDate": "2024-07-17"}
+
+@pytest.fixture
+def add_income():
+    return {"userid": "",
+            "idFrequencyType": 3,
+            "idIncomeCategory": 3,
+            "value": 1000,
+            "incomeDate": "2024-07-13"}
+@pytest.fixture
+def put_income():
+    return {"id": "",
+            "userid": "",
+            "idFrequencyType": 2,
+            "idIncomeCategory": 1,
+            "value": 5000,
+            "incomeDate": "2024-07-17"}

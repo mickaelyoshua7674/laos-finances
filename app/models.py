@@ -71,7 +71,7 @@ class Income(BaseModel):
     idFrequencyType:int
     idIncomeCategory:int
     value:float = Field(gt=0)
-    expenseDate:date
+    incomeDate:date
 
     @field_validator("idFrequencyType")
     def checkFrequencyType(cls, x:int) -> int:
@@ -90,11 +90,11 @@ class Income(BaseModel):
     @classmethod
     def getInsertScript(cls) -> TextClause:
         return text(
-        'INSERT INTO fato_income (userid,"idFrequencyType","idIncomeCategory",value,"expenseDate") VALUES  (:userid,:idFrequencyType,:idIncomeCategory,:value,:expenseDate) RETURNING id;')
+        'INSERT INTO fato_income (userid,"idFrequencyType","idIncomeCategory",value,"incomeDate") VALUES (:userid,:idFrequencyType,:idIncomeCategory,:value,:incomeDate) RETURNING id;')
 
     def getUpdateScript(self) -> TextClause:
         return text(
-        f'UPDATE fato_income SET "idFrequencyType"=:idFrequencyType, "idIncomeCatgory"=:idIncomeCategory, value=:value, "expenseDate"=:expenseDate WHERE id={self.id};')
+        f'UPDATE fato_income SET "idFrequencyType"=:idFrequencyType, "idIncomeCategory"=:idIncomeCategory, value=:value, "incomeDate"=:incomeDate WHERE id={self.id};')
     
     def validateID(self) -> bool:
         with engine.connect() as conn:

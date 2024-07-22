@@ -18,10 +18,18 @@ async def remove_user(conn, register_user):
 def get_cookie(userid):
     return {"access_token":f"Bearer {jwt.encode({"userid":str(userid), "expires":time.time() + 60}, SECRET_KEY, algorithm=ALGORITHM)}"}
 async def get_expenseid(conn, userid):
+
     res = await conn.execute(text(f"SELECT id FROM fato_expense WHERE userid='{userid}';"))
     return res.fetchone()[0]
 async def remove_expense(conn, id):
     await conn.execute(text(f"DELETE FROM fato_expense WHERE id='{id}';"))
+    await conn.commit()
+
+async def get_incomeid(conn, userid):
+    res = await conn.execute(text(f"SELECT id FROM fato_income WHERE userid='{userid}';"))
+    return res.fetchone()[0]
+async def remove_income(conn, id):
+    await conn.execute(text(f"DELETE FROM fato_income WHERE id='{id}';"))
     await conn.commit()
 
 ################################### TESTS DATABASE ###################################
@@ -146,4 +154,92 @@ async def test_update_expense(client_kwargs, conn, register_user, add_expense, p
         assert res_put.status_code == 200
 
         await ac.delete(f"/expenses/{id}")
+    await remove_user(conn, register_user)
+
+################################### TESTS INCOMES ###################################
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_register"])
+async def test_add_income(client_kwargs, conn, register_user, add_income):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_income["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        print()
+        print(add_income)
+        print()
+        res_add = await ac.post("/incomes", json=add_income)
+    id = await get_incomeid(conn, userid)
+
+    assert res_add.json()["id"] == id
+    res_add.status_code == 200
+
+    await remove_income(conn, id)
+    await remove_user(conn, register_user)
+
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_add_income"])
+async def test_del_income(client_kwargs, conn, register_user, add_income):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_income["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        res_add = await ac.post("/incomes", json=add_income)
+        res_add_json = res_add.json()
+        id = res_add_json["id"]
+
+        res_del = await ac.delete(f"/incomes/{id}")
+    
+    assert res_del.json()["message"] == "Income deleted."
+    assert res_del.status_code == 200
+
+    await remove_user(conn, register_user)
+
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_del_income"])
+async def test_get_income(client_kwargs, conn, register_user, add_income):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_income["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        res_add = await ac.post("/incomes", json=add_income)
+        res_add_json = res_add.json()
+        id = res_add_json["id"]
+
+        res_get = await ac.get(f"/incomes/{userid}")
+
+        assert res_get.json()[0]["id"] == id
+        assert res_get.status_code == 200
+
+        await ac.delete(f"/incomes/{id}")
+    await remove_user(conn, register_user)
+
+@pytest.mark.asyncio
+@pytest.mark.dependency(depends=["test_get_income"])
+async def test_update_income(client_kwargs, conn, register_user, add_income, put_income):
+    async with AsyncClient(**client_kwargs()) as ac:
+        res_register = await ac.post("/register", json=register_user)
+    userid = res_register.json()["userid"]
+    add_income["userid"] = userid
+    put_income["userid"] = userid
+
+    async with AsyncClient(**client_kwargs(get_cookie(userid))) as ac:
+        res_add = await ac.post("/incomes", json=add_income)
+        res_add_json = res_add.json()
+        id = res_add_json["id"]
+        put_income["id"] = id
+
+        res_put = await ac.put("/incomes", json=put_income)
+        res_put_json = res_put.json()
+
+        assert res_put_json != res_add_json
+        assert res_put_json["id"] == id
+        assert res_put.status_code == 200
+
+        await ac.delete(f"/incomes/{id}")
     await remove_user(conn, register_user)
