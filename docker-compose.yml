@@ -15,7 +15,7 @@ services:
       # this ENV variable is only required for the healthcheck section - if you don't specify it, the check command will fail stating the root user doesn't exist in posgres
       - PGUSER=postgres
     volumes:
-      - ./database-data:/var/lib/postgresql/data # persistent data
+      - ./database-finances:/var/lib/postgresql/data # persistent data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql # create tables automatically
     ports:
       - 5432:5432

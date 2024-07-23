@@ -37,7 +37,7 @@ env/
 venv/
 
 # Database data
-Database-data/
+database-finances/
 
 # Pgadmin4 data
 pgadmin-files/
