@@ -7,7 +7,7 @@ services:
       - postgres-network
     container_name: postgres-database
     image: postgres:16-alpine3.18 # alpine is a light version of Linux
-    restart: always # allowing to restart the container
+    restart: always
     environment:
       - POSTGRES_USER=postgres # defining username
       - POSTGRES_PASSWORD=0000 # defining password
@@ -29,27 +29,12 @@ services:
       retries: 5
       start_interval: 15s
 
-  # pgadmin:
-  #   networks:
-  #     - postgres-network
-  #   image: dpage/pgadmin4
-  #   container_name: pgadmin4
-  #   environment:
-  #     - PGADMIN_DEFAULT_EMAIL=admin@admin.com
-  #     - PGADMIN_DEFAULT_PASSWORD=admin
-  #   ports:
-  #     - 15432:80
-  #   volumes:
-  #     - ./pgadmin-files:/var/lib/pgadmin
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-
   app:
     networks:
       - postgres-network
     container_name: finances
     build: .
+    restart: always
     depends_on: # db will start before app
       db:
         condition: service_healthy
@@ -73,6 +58,23 @@ services:
       - 8080
     command: python main.py
     # command: tail -F anything
+
+  pgadmin:
+    networks:
+      - postgres-network
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - 15432:80
+    volumes:
+      - ./pgadmin-files:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["pgadmin"] # will run only if --profile pgadmin is called with docker compose up
 
 networks:
   postgres-network:
