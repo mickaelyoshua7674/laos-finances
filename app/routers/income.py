@@ -13,9 +13,6 @@ incomes = APIRouter(prefix="/incomes", tags=["incomes"])
 @incomes.post("/", dependencies=[Depends(oauth2_scheme)])
 async def add(request:Request, response:Response, data:dict, conn=Depends(getConn)) -> Income:
     data["userid"] = UUID(data["userid"])
-    print()
-    print(data)
-    print()
     i = Income(**data)
     userid = str(i.userid)
     if decodeJWT(request.cookies.get("access_token"))["userid"] == userid:

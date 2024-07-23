@@ -1,14 +1,14 @@
-DROP TABLE IF EXISTS fato_income;
-DROP TABLE IF EXISTS fato_expense;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS "dim_expenseSubCategory";
-DROP TABLE IF EXISTS "dim_expenseCategory";
-DROP TABLE IF EXISTS "dim_incomeCategory";
-DROP TABLE IF EXISTS "dim_frequencyType";
+--DROP TABLE IF EXISTS fato_income;
+--DROP TABLE IF EXISTS fato_expense;
+--DROP TABLE IF EXISTS users;
+--DROP TABLE IF EXISTS "dim_expenseSubCategory";
+--DROP TABLE IF EXISTS "dim_expenseCategory";
+--DROP TABLE IF EXISTS "dim_incomeCategory";
+--DROP TABLE IF EXISTS "dim_frequencyType";
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM Frequency Type
-CREATE TABLE "dim_frequencyType" (
+CREATE TABLE IF NOT EXISTS "dim_frequencyType" (
 	"idFrequencyType" INT GENERATED ALWAYS AS IDENTITY,
 	description TEXT NOT NULL,
 	CONSTRAINT "pk_frequencyType" PRIMARY KEY("idFrequencyType")
@@ -18,7 +18,7 @@ INSERT INTO "dim_frequencyType" (description) VALUES
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM Expense Category
-CREATE TABLE "dim_expenseCategory" (
+CREATE TABLE IF NOT EXISTS "dim_expenseCategory" (
 	"idExpenseCategory" INT GENERATED ALWAYS AS IDENTITY,
 	description TEXT NOT NULL,
 	CONSTRAINT "pk_expenseCategory" PRIMARY KEY("idExpenseCategory")
@@ -40,7 +40,7 @@ INSERT INTO "dim_expenseCategory" (description) VALUES
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM Expense SubCategory
-CREATE TABLE "dim_expenseSubCategory" (
+CREATE TABLE IF NOT EXISTS "dim_expenseSubCategory" (
 	"idExpenseSubCategory" INT GENERATED ALWAYS AS IDENTITY,
 	"idExpenseCategory" INT NOT NULL,
 	description TEXT NOT NULL,
@@ -96,7 +96,7 @@ INSERT INTO "dim_expenseSubCategory" ("idExpenseCategory", description) VALUES
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM User
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
 	userid UUID DEFAULT GEN_RANDOM_UUID(),
 	username TEXT UNIQUE NOT NULL,
 	name TEXT NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE users (
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Expenses
-CREATE TABLE fato_expense (
+CREATE TABLE IF NOT EXISTS fato_expense (
 	id INT GENERATED ALWAYS AS IDENTITY,
 	userid UUID,
 	"idFrequencyType" INT NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE fato_expense (
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- DIM Income Category
-CREATE TABLE "dim_incomeCategory" (
+CREATE TABLE IF NOT EXISTS "dim_incomeCategory" (
 	"idIncomeCategory" INT GENERATED ALWAYS AS IDENTITY,
 	description TEXT NOT NULL,
 	CONSTRAINT "pk_IncomeCategory" PRIMARY KEY ("idIncomeCategory")
@@ -132,7 +132,7 @@ INSERT INTO "dim_incomeCategory" (description) VALUES
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- FATO Income
-CREATE TABLE fato_income (
+CREATE TABLE IF NOT EXISTS fato_income (
 	id INT GENERATED ALWAYS AS IDENTITY,
 	userid UUID,
 	"idFrequencyType" INT NOT NULL,

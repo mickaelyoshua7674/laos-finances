@@ -1,0 +1,21 @@
+---
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [3.12]
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests
+        run: docker compose run --rm app bash -c "pytest"; docker compose down
